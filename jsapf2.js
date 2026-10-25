@@ -1,4 +1,4 @@
-// jsapf2 0.2.1
+// jsapf2 0.2.2
 
 function headerToData(head) {
   // 44 is comma, 120 is x
@@ -136,12 +136,16 @@ function parseAPF2(data) {
   var flags = head[3]
 
   var mode = 1
+  var transmode = 0
   if (flags.indexOf(108) !== -1) {mode = 0}
+  if (flags.indexOf(116) !== -1) {transmode = 1}
 
   var pal = null
   if (mode == 1) {
     pal = palette_to_palette(n[2])
   }
+
+  if (transmode = 1 && mode == 1) {pal[0] = [0, 0, 0, 0]}
 
   for (he of Array(h).keys()) {
     pixmap.push([])
@@ -207,7 +211,7 @@ function jsapf2() {
         imageData.data[i] = apf2[0][y][x][0];   // R
         imageData.data[i+1] = apf2[0][y][x][1]; // G
         imageData.data[i+2] = apf2[0][y][x][2]; // B
-        imageData.data[i+3] = 255;              // A
+        if (apf2[0][y][x].length > 3) {imageData.data[i+3] = apf2[0][y][x][3]} else (imageData.data[i+3] = 255); // A
       }
     }
     ctx.putImageData(imageData, 0, 0);
