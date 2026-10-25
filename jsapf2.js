@@ -1,4 +1,4 @@
-// jsapf2 0.2.2
+// jsapf2 0.2.3
 
 function headerToData(head) {
   // 44 is comma, 120 is x
@@ -138,14 +138,14 @@ function parseAPF2(data) {
   var mode = 1
   var transmode = 0
   if (flags.indexOf(108) !== -1) {mode = 0}
-  if (flags.indexOf(116) !== -1) {transmode = 1}
+  if (flags.indexOf(116) !== -1) {transmode = 1;console.log("transparency on")}
 
   var pal = null
   if (mode == 1) {
     pal = palette_to_palette(n[2])
   }
 
-  if (transmode = 1 && mode == 1) {pal[0] = [0, 0, 0, 0]}
+  if (transmode == 1 && mode == 1) {pal[0] = [0, 0, 0, 0]}
 
   for (he of Array(h).keys()) {
     pixmap.push([])
