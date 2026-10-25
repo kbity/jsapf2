@@ -9,3 +9,5 @@ APF2 (Aperture Picture Format 2) JavaScript Polyfill. Intended to replace apf2we
 0.2.1 - Can decode APF images (Portal ARG APF Files)
 
 0.2.2 - Can correctly decode APF2 images with transparency (t flag)
+
+0.2.3 - Fix bug where transparency is added to non-t images
