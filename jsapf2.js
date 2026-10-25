@@ -1,4 +1,4 @@
-// jsapf2 0.2.3
+// jsapf2 0.3.0
 
 function headerToData(head) {
   // 44 is comma, 120 is x
@@ -104,6 +104,7 @@ function check_array(ar1, ar2) {
 function parseAPF2(data) {
   var bytes = new Uint8Array(data);
   var head_1993 = [65,80,69,82,84,85,82,69,32,73,77,65,71,69,32,70,79,82,77,65,84,32,40,99,41,32,49,57,57,51]
+  var head_1994 = [65,80,69,82,84,85,82,69,32,73,77,65,71,69,32,70,79,82,77,65,84,32,40,99,41,32,49,57,57,52]
   var head_1985 = [65,80,69,82,84,85,82,69,32,73,77,65,71,69,32,70,79,82,77,65,84,32,40,99,41,32,49,57,56,53]
   // var head_1994 = [65,80,69,82,84,85,82,69,32,73,77,65,71,69,32,70,79,82,77,65,84,32,40,99,41,32,49,57,57,52] - for future reference
 
@@ -121,12 +122,12 @@ function parseAPF2(data) {
     }
   }
 
-  if (!(check_array(n[0], head_1993))) {
-    if (check_array(n[0], head_1985)) {
+  if (!(check_array(n[0], head_1993)) && !(check_array(n[0], head_1994))) {
+    if (check_array(n[0], head_1985)) { // upgrade apf to apf2
       var apfh = [51, 50, 48, 120, 50, 48, 48, 44, 108, 44] // 320x200,l,
       n.splice(2, 0, [46])
       n[1] = apfh.concat(n[1])
-    } // upgrade apf to apf2
+    } else {throw "Invalid or Unsupported APF2 Image"}
   }
 
   head = headerToData(n[1])
@@ -138,14 +139,26 @@ function parseAPF2(data) {
   var mode = 1
   var transmode = 0
   if (flags.indexOf(108) !== -1) {mode = 0}
-  if (flags.indexOf(116) !== -1) {transmode = 1;console.log("transparency on")}
+  if (flags.indexOf(100) !== -1) {mode = 2}
+  if (flags.indexOf(116) !== -1) {transmode = 1}
+  if (flags.indexOf(97) !== -1) {transmode = 2}
 
   var pal = null
-  if (mode == 1) {
-    pal = palette_to_palette(n[2])
+  var indlen = 1
+
+  if (mode == 2) {
+    indlen = 2
+  }
+  var palwid = 6+indlen
+  if (transmode == 2) {
+    palwid += 2
+  }
+  
+  if (mode == 1 || mode == 2) {
+    pal = palette_to_palette(n[2], palwid, indlen)
   }
 
-  if (transmode == 1 && mode == 1) {pal[0] = [0, 0, 0, 0]}
+  if (transmode == 1 && (mode == 1 || mode == 2)) {pal[0] = [0, 0, 0, 0]}
 
   for (he of Array(h).keys()) {
     pixmap.push([])
@@ -160,10 +173,18 @@ function parseAPF2(data) {
 
   dat = n[3]
 
-  if (mode == 1) { // APF2 95 color mode
-    for (let i = 0; i < dat.length; i += 2) {
-      var ind = dat[i]-32
-      var run = dat[i+1]-32
+  if (mode == 1 || mode == 2) { // APF2 95 color mode
+    for (let i = 0; i < dat.length; i += indlen+1) {
+      var ind = 0
+
+      if (indlen == 2) {
+        ind = base95_to_num([dat[i], dat[i+1]])
+      } else {
+        ind = dat[i]-32
+      }
+
+      var run = dat[i+indlen]-32
+
       for (let r = 0; r < run; r++) {
         if (x >= w) {x = 0;y = y-ls;if (y >= h || 0 > y) {ofst++;y = h-ofst}}
         pixmap[y][x] = pal[ind]
@@ -183,6 +204,8 @@ function parseAPF2(data) {
       if (col == 0) {col = 255} else {col = 0}
     }
   }
+
+  if (indlen == 2) {console.log(pixmap)}
 
   return [pixmap, w, h];
 }
