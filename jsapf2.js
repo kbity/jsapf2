@@ -1,4 +1,4 @@
-// jsapf2 0.2.0
+// jsapf2 0.2.1
 
 function headerToData(head) {
   // 44 is comma, 120 is x
@@ -97,9 +97,14 @@ function palette_to_palette(palette, palwid = 7, indlen = 1) {
   return opalette
 }
 
+function check_array(ar1, ar2) {
+  return (equal = ar1.length === ar2.length && ar1.every((value, index) => value === ar2[index]))
+}
+
 function parseAPF2(data) {
   var bytes = new Uint8Array(data);
   var head_1993 = [65,80,69,82,84,85,82,69,32,73,77,65,71,69,32,70,79,82,77,65,84,32,40,99,41,32,49,57,57,51]
+  var head_1985 = [65,80,69,82,84,85,82,69,32,73,77,65,71,69,32,70,79,82,77,65,84,32,40,99,41,32,49,57,56,53]
   // var head_1994 = [65,80,69,82,84,85,82,69,32,73,77,65,71,69,32,70,79,82,77,65,84,32,40,99,41,32,49,57,57,52] - for future reference
 
   var w = 0
@@ -116,7 +121,13 @@ function parseAPF2(data) {
     }
   }
 
-  if (!(equal = n[0].length === head_1993.length && n[0].every((value, index) => value === head_1993[index]))) {throw "Invalid/Unsupported APF2 File"}
+  if (!(check_array(n[0], head_1993))) {
+    if (check_array(n[0], head_1985)) {
+      var apfh = [51, 50, 48, 120, 50, 48, 48, 44, 108, 44] // 320x200,l,
+      n.splice(2, 0, [46])
+      n[1] = apfh.concat(n[1])
+    } // upgrade apf to apf2
+  }
 
   head = headerToData(n[1])
   w = head[0]
@@ -175,7 +186,7 @@ function parseAPF2(data) {
 // this part is lifted from PolyPixMap
 function jsapf2() {
   document.querySelectorAll("img").forEach(async img => {
-    if (!img.src.endsWith(".apf2") && !img.src.endsWith(".af2") && !img.src.endsWith(".a2k") && !img.src.endsWith(".ap2k"))
+    if (!img.src.endsWith(".apf2") && !img.src.endsWith(".af2") && !img.src.endsWith(".a2k") && !img.src.endsWith(".ap2k") && !img.src.endsWith(".apf"))
       return;
 
     var old_src = img.src
