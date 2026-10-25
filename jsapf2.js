@@ -1,4 +1,4 @@
-// jsapf2 0.1.0
+// jsapf2 0.2.0
 
 function headerToData(head) {
   // 44 is comma, 120 is x
@@ -33,9 +33,6 @@ function headerToData(head) {
     hl--
     h = h + (v-48)*Math.pow(10, hl)
   }
-
-  console.log(hd)
-  console.log(w, h)
 
   var ls = 0
   var lsl = hd[2].length
@@ -91,7 +88,6 @@ function palette_to_palette(palette, palwid = 7, indlen = 1) {
     if (val%palwid == 0) {palvals.push([]);n++}
     palvals[n].push(palette[val])
   }
-  console.log(palvals)
 
   for (pind in palvals) {
     var ind = base95_to_num(palvals[pind].slice(0, indlen))
@@ -115,23 +111,26 @@ function parseAPF2(data) {
 
   // this splits our apf2 into its lines
   for (byte of bytes) {
-    if (byte == 10) {line++; console.log("newline"); n.push([])} else if (byte != 13) {
+    if (byte == 10) {line++; n.push([])} else if (byte != 13) {
       n[line].push(byte)
     }
   }
 
-  console.log(n)
   if (!(equal = n[0].length === head_1993.length && n[0].every((value, index) => value === head_1993[index]))) {throw "Invalid/Unsupported APF2 File"}
 
   head = headerToData(n[1])
   w = head[0]
   h = head[1]
-  ls = head[2]
+  var ls = head[2]
+  var flags = head[3]
 
-  console.log(head)
+  var mode = 1
+  if (flags.indexOf(108) !== -1) {mode = 0}
 
-  pal = palette_to_palette(n[2])
-  console.log(pal)
+  var pal = null
+  if (mode == 1) {
+    pal = palette_to_palette(n[2])
+  }
 
   for (he of Array(h).keys()) {
     pixmap.push([])
@@ -145,24 +144,31 @@ function parseAPF2(data) {
   var ofst = 1
 
   dat = n[3]
-  for (let i = 0; i < dat.length; i += 2) {
-    var ind = dat[i]-32
-    var run = dat[i+1]-32
-    for (let r = 0; r < run; r++) {
-      if (x >= w) {
-        x = 0
-        y = y-ls
-        console.log(y)
-        if (y >= h || 0 > y) {
-          ofst++
-          y = h-ofst
-        }
+
+  if (mode == 1) { // APF2 95 color mode
+    for (let i = 0; i < dat.length; i += 2) {
+      var ind = dat[i]-32
+      var run = dat[i+1]-32
+      for (let r = 0; r < run; r++) {
+        if (x >= w) {x = 0;y = y-ls;if (y >= h || 0 > y) {ofst++;y = h-ofst}}
+        pixmap[y][x] = pal[ind]
+        x++
       }
-      pixmap[y][x] = pal[ind]
-      x++
+    }
+
+  } else if (mode == 0) { // APF2 2 color mode
+    var col = 0
+    for (let i = 0; i < dat.length; i += 1) {
+      var run = dat[i]-32
+      for (let r = 0; r < run; r++) {
+        if (x >= w) {x = 0;y = y-ls;if (y >= h || 0 > y) {ofst++;y = h-ofst}}
+        pixmap[y][x] = [col, col, col]
+        x++
+      }
+      if (col == 0) {col = 255} else {col = 0}
     }
   }
-  console.log(pixmap)
+
   return [pixmap, w, h];
 }
 
