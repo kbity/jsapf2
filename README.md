@@ -5,3 +5,5 @@ APF2 (Aperture Picture Format 2) JavaScript Polyfill. Intended to replace apf2we
 0.1.0 - Can decode APF2-LC images (APF2s with no flags)
 
 0.2.0 - Can decode APF2 images (APF2s with no flags, or the l flag (2 color mode))
+
+0.2.1 - Can decode APF images (Portal ARG APF Files)
