@@ -15,3 +15,5 @@ APF2 (Aperture Picture Format 2) JavaScript Polyfill. Intended to replace apf2we
 0.3.0 - Add support for Dual-Indexed APF2 images and RGBA palettes (All APF2-1994 should decode, but without animation)
 
 0.3.1 - Add support for bg.fg images, including bilevel+alpha images and tl flag images
+
+0.4.0 - Add support for all APF2-2000 static, single-layer images
