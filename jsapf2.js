@@ -1,4 +1,6 @@
-// jsapf2 0.4.0
+// jsapf2 0.5.0
+
+nmpap95 = {0: 0, 1: 2, 2: 5, 3: 7, 4: 10, 5: 13, 6: 15, 7: 18, 8: 21, 9: 24, 10: 26, 11: 29, 12: 32, 13: 34, 14: 37, 15: 40, 16: 43, 17: 45, 18: 48, 19: 51, 20: 53, 21: 56, 22: 59, 23: 62, 24: 64, 25: 67, 26: 70, 27: 72, 28: 75, 29: 78, 30: 81, 31: 83, 32: 86, 33: 89, 34: 91, 35: 94, 36: 97, 37: 100, 38: 102, 39: 105, 40: 108, 41: 110, 42: 113, 43: 116, 44: 119, 45: 121, 46: 124, 47: 127, 48: 129, 49: 132, 50: 135, 51: 137, 52: 140, 53: 143, 54: 146, 55: 148, 56: 151, 57: 154, 58: 156, 59: 159, 60: 162, 61: 165, 62: 167, 63: 170, 64: 173, 65: 175, 66: 178, 67: 181, 68: 184, 69: 186, 70: 189, 71: 192, 72: 194, 73: 197, 74: 200, 75: 203, 76: 205, 77: 208, 78: 211, 79: 213, 80: 216, 81: 219, 82: 222, 83: 224, 84: 227, 85: 230, 86: 232, 87: 235, 88: 238, 89: 241, 90: 243, 91: 246, 92: 249, 93: 251, 94: 254};
 
 function headerToData(head) {
   // 44 is comma, 120 is x
@@ -43,8 +45,18 @@ function headerToData(head) {
     ls = ls + (v-48)*Math.pow(10, lsl)
   }
 
+  var ad = 0
+  if (hd.length > 4) {
+    var adl = hd[4].length
+
+    for (v in hd[4]) {
+      var v = hd[4][v]
+      adl--
+      ad = ad + (v-48)*Math.pow(10, adl)
+    }
+  }
   // width, height, lineskip, flags, animdelay
-  return [w, h, ls, hd[1], 0]
+  return [w, h, ls, hd[1], ad]
 }
 
 function base95_to_num(b95) {
@@ -118,8 +130,6 @@ function lpalette(obj) {
     c2 = hex_to_nums(dc[1])
   }
 
-  //console.log([c1, c2])
-
   return [c1, c2]
 }
 
@@ -131,6 +141,91 @@ function unpacktrits(c) {
   return [r, g, b, a]
 }
 
+function dec_a2k(pixmap, dat, indlen, runlength, mode, uncomp, x, y, transmode, ofst, w, h, ls, lf, tm) {
+  for (let i = 0; i < dat.length; i += indlen+runlength) {
+    var r = null
+    var g = null
+    var b = null
+    var a = null
+    var c = null
+    var run = 0
+
+    var cb = null
+
+    if (mode == 3) {r = dat[i]-32; g = dat[i+1]-32; b = dat[i+2]-32; if (uncomp) {run = 1} else { run = dat[i+3]-32}; nmpap95[94] = 255; r = nmpap95[r]; g = nmpap95[g]; b = nmpap95[b]; a = 255}
+    if (mode == 4) {r = dat[i]-32; g = dat[i+1]-32; b = dat[i+2]-32; a = dat[i+3]-32; if (uncomp) {run = 1} else { run = dat[i+4]-32}; nmpap95[94] = 255; r = nmpap95[r]; g = nmpap95[g]; b = nmpap95[b]; a = nmpap95[a]}
+
+    if (mode == 5) {r = dat[i]-32; g = dat[i+1]-32; b = dat[i+2]-32; c = dat[i+3]-32; if (uncomp) {run = 1} else { run = dat[i+4]-32};
+                      r = nmpap95[r]; g = nmpap95[g]; b = nmpap95[b]; a = 255; cb = unpacktrits(c); r+=cb[0]; g+=cb[1]; b+=cb[2]; if (transmode > 0) {a = [0, 128, 255][cb[3]]}}
+    if (mode == 6) {r = dat[i]-32; g = dat[i+1]-32; b = dat[i+2]-32; a = dat[i+3]-32; c = dat[i+4]-32; if (uncomp) {run = 1} else { run = dat[i+5]-32};
+                      r = nmpap95[r]; g = nmpap95[g]; b = nmpap95[b]; a = nmpap95[a]; cb = unpacktrits(c); r+=cb[0]; g+=cb[1]; b+=cb[2]; a+=cb[3]}
+
+    if (mode == 7) {g = dat[i]-32; if (uncomp) {run = 1} else { run = dat[i+1]-32}; nmpap95[94] = 255; g = nmpap95[g]; r=g; b=g; a=255}
+    if (mode == 8) {g = base95_to_num([dat[i], dat[i+1]]); if (uncomp) {run = 1} else { run = dat[i+2]-32}; r=g; b=g; a=255}
+
+    for (let cr = 0; cr < run; cr++) {
+      if (x >= w) {x = 0;y = y-ls;if (y >= h || 0 > y) {ofst++;y = h-ofst}}
+      pixmap[y][x] = [r, g, b, a]
+      if (lf != null && (r+g+b+a == 0 || (tm == true && (r == 255 && g == 0 && b == 255 && a == 255)))) {pixmap[y][x] = lf[y][x]}
+      x++
+    }
+  }
+  return pixmap
+}
+
+function dec_apf(pixmap, dat, pal, x, y, ofst, w, h, ls) {
+  var col = false
+  for (let i = 0; i < dat.length; i += 1) {
+    var run = dat[i]-32
+
+    for (let r = 0; r < run; r++) {
+      if (x >= w) {x = 0;y = y-ls;if (y >= h || 0 > y) {ofst++;y = h-ofst}}
+      if (col) {
+        pixmap[y][x] = pal[1]
+      } else {
+        pixmap[y][x] = pal[0]
+      }
+      x++
+    }
+    col = !(col)
+  }
+  return pixmap
+}
+
+function dec_apf2(pixmap, dat, pal, x, y, ofst, w, h, ls, indlen, runlength, uncomp, lf) {
+  for (let i = 0; i < dat.length; i += indlen+runlength) {
+    var ind = 0
+
+    if (indlen == 2) {
+      ind = base95_to_num([dat[i], dat[i+1]])
+    } else {
+      ind = dat[i]-32
+    }
+
+    var run = 1
+    if (!uncomp) {run = dat[i+indlen]-32}
+
+    for (let r = 0; r < run; r++) {
+      if (x >= w) {x = 0;y = y-ls;if (y >= h || 0 > y) {ofst++;y = h-ofst}}
+      pixmap[y][x] = pal[ind]
+      if (lf != null && pal[ind][0]+pal[ind][1]+pal[ind][2]+pal[ind][3] == 0) {pixmap[y][x] = lf[y][x]}
+      x++
+    }
+  }
+  return pixmap
+}
+
+function mkpm(w, h) {
+  pixmap = [];
+  for (var i = 0; i < h; i++) {
+    pixmap.push([])
+    for (var o = 0; o < w; o++) {
+      pixmap[i].push(null)
+    }
+  }
+  return pixmap;
+}
+
 function parseAPF2(data) {
   var bytes = new Uint8Array(data);
   var head_1993 = [65,80,69,82,84,85,82,69,32,73,77,65,71,69,32,70,79,82,77,65,84,32,40,99,41,32,49,57,57,51]
@@ -138,10 +233,9 @@ function parseAPF2(data) {
   var head_1985 = [65,80,69,82,84,85,82,69,32,73,77,65,71,69,32,70,79,82,77,65,84,32,40,99,41,32,49,57,56,53]
   var head_2000 = [65,80,69,82,84,85,82,69,32,73,77,65,71,69,32,70,79,82,77,65,84,32,40,99,41,32,50,48,48,48]
 
-  var mapping = {0: 0, 1: 2, 2: 5, 3: 7, 4: 10, 5: 13, 6: 15, 7: 18, 8: 21, 9: 24, 10: 26, 11: 29, 12: 32, 13: 34, 14: 37, 15: 40, 16: 43, 17: 45, 18: 48, 19: 51, 20: 53, 21: 56, 22: 59, 23: 62, 24: 64, 25: 67, 26: 70, 27: 72, 28: 75, 29: 78, 30: 81, 31: 83, 32: 86, 33: 89, 34: 91, 35: 94, 36: 97, 37: 100, 38: 102, 39: 105, 40: 108, 41: 110, 42: 113, 43: 116, 44: 119, 45: 121, 46: 124, 47: 127, 48: 129, 49: 132, 50: 135, 51: 137, 52: 140, 53: 143, 54: 146, 55: 148, 56: 151, 57: 154, 58: 156, 59: 159, 60: 162, 61: 165, 62: 167, 63: 170, 64: 173, 65: 175, 66: 178, 67: 181, 68: 184, 69: 186, 70: 189, 71: 192, 72: 194, 73: 197, 74: 200, 75: 203, 76: 205, 77: 208, 78: 211, 79: 213, 80: 216, 81: 219, 82: 222, 83: 224, 84: 227, 85: 230, 86: 232, 87: 235, 88: 238, 89: 241, 90: 243, 91: 246, 92: 249, 93: 251, 94: 254};
-
   var w = 0
   var h = 0
+  var ad = 0
   var pixmap = [] // blank list, [y][x] format
 
   var line = 0
@@ -165,6 +259,7 @@ function parseAPF2(data) {
   head = headerToData(n[1])
   w = head[0]
   h = head[1]
+  ad = head[4]
   var ls = head[2]
   var flags = head[3]
 
@@ -173,6 +268,9 @@ function parseAPF2(data) {
   var indlen = 1
   var flip = false
   var uncomp = false
+  var anim = false
+  var anic = false
+  var tm = false
 
   if (flags.indexOf(108) !== -1) {mode = 0}
   if (flags.indexOf(105) !== -1) {mode = 1; indlen = 1}
@@ -189,6 +287,9 @@ function parseAPF2(data) {
 
   if (flags.indexOf(117) !== -1) {flip = true}
   if (flags.indexOf(85) !== -1) {uncomp = true}
+  if (flags.indexOf(109) !== -1) {anim = true}
+  if (flags.indexOf(99) !== -1) {anic = true}
+  if (flags.indexOf(77) !== -1) {tm = true}
 
   var pal = null
 
@@ -205,13 +306,6 @@ function parseAPF2(data) {
 
   if (transmode == 1 && (mode == 0 || mode == 1 || mode == 2)) {pal[0] = [0, 0, 0, 0]}
 
-  for (he of Array(h).keys()) {
-    pixmap.push([])
-    for (wi of Array(w).keys()) {
-      pixmap[he].push(null)
-    }
-  }
-
   var y = h-1
   var x = 0
   var ofst = 1
@@ -219,77 +313,32 @@ function parseAPF2(data) {
   var runlength = 1
   if (uncomp) {runlength = 0;}
 
-  dat = n[3]
+  // mode, dat (n[3]), indlen, runlength, uncomp, pixmap, pal
 
-  if (mode == 1 || mode == 2) { // APF2 paletted color modes
-    for (let i = 0; i < dat.length; i += indlen+runlength) {
-      var ind = 0
+  var frames = []
 
-      if (indlen == 2) {
-        ind = base95_to_num([dat[i], dat[i+1]])
-      } else {
-        ind = dat[i]-32
-      }
+  for (var i = 3; i < n.length; i++) {
+    dat = n[i]
+    var lf = null
+    console.log(anic && i > 3)
+    if (anic == true && i > 3) {lf = frames[i-4]}
 
-      var run = 1
-      if (!uncomp) {run = dat[i+indlen]-32}
-
-      for (let r = 0; r < run; r++) {
-        if (x >= w) {x = 0;y = y-ls;if (y >= h || 0 > y) {ofst++;y = h-ofst}}
-        pixmap[y][x] = pal[ind]
-        x++
-      }
+    if (mode == 1 || mode == 2) { // APF2 paletted color modes
+      frame = dec_apf2(mkpm(w, h), dat, pal, x, y, ofst, w, h, ls, indlen, runlength, uncomp, lf)
+    } else if (mode == 0) { // APF2 2 color mode
+      frame = dec_apf(mkpm(w, h), dat, pal, x, y, ofst, w, h, ls)
+    } else if (mode == 3 || mode == 4 || mode == 5 || mode == 6 || mode == 7 || mode == 8) { // APF2 deep modes and gray modes
+      frame = dec_a2k(mkpm(w, h), dat, indlen, runlength, mode, uncomp, x, y, transmode, ofst, w, h, ls, lf, tm)
     }
-
-  } else if (mode == 0) { // APF2 2 color mode
-    var col = false
-    for (let i = 0; i < dat.length; i += 1) {
-      var run = dat[i]-32
-
-      for (let r = 0; r < run; r++) {
-        if (x >= w) {x = 0;y = y-ls;if (y >= h || 0 > y) {ofst++;y = h-ofst}}
-        if (col) {
-          pixmap[y][x] = pal[1]
-        } else {
-          pixmap[y][x] = pal[0]
-        }
-        x++
-      }
-      col = !(col)
-    }
-  } else if (mode == 3 || mode == 4 || mode == 5 || mode == 6 || mode == 7 || mode == 8) { // APF2 deep modes and gray modes
-    for (let i = 0; i < dat.length; i += indlen+runlength) {
-      var r = null
-      var g = null
-      var b = null
-      var a = null
-      var c = null
-      var run = 0
-
-      var cb = null
-
-      if (mode == 3) {r = dat[i]-32; g = dat[i+1]-32; b = dat[i+2]-32; if (uncomp) {run = 1} else { run = dat[i+3]-32}; mapping[94] = 255; r = mapping[r]; g = mapping[g]; b = mapping[b]; a = 255}
-      if (mode == 4) {r = dat[i]-32; g = dat[i+1]-32; b = dat[i+2]-32; a = dat[i+3]-32; if (uncomp) {run = 1} else { run = dat[i+4]-32}; mapping[94] = 255; r = mapping[r]; g = mapping[g]; b = mapping[b]; a = mapping[a]}
-
-      if (mode == 5) {r = dat[i]-32; g = dat[i+1]-32; b = dat[i+2]-32; c = dat[i+3]-32; if (uncomp) {run = 1} else { run = dat[i+4]-32};
-                      r = mapping[r]; g = mapping[g]; b = mapping[b]; a = 255; cb = unpacktrits(c); r+=cb[0]; g+=cb[1]; b+=cb[2]; if (transmode > 0) {a = [0, 128, 255][cb[3]]}}
-      if (mode == 6) {r = dat[i]-32; g = dat[i+1]-32; b = dat[i+2]-32; a = dat[i+3]-32; c = dat[i+4]-32; if (uncomp) {run = 1} else { run = dat[i+5]-32};
-                      r = mapping[r]; g = mapping[g]; b = mapping[b]; a = mapping[a]; cb = unpacktrits(c); r+=cb[0]; g+=cb[1]; b+=cb[2]; a+=cb[3]}
-
-      if (mode == 7) {g = dat[i]-32; if (uncomp) {run = 1} else { run = dat[i+1]-32}; mapping[94] = 255; g = mapping[g]; r=g; b=g; a=255}
-      if (mode == 8) {g = base95_to_num([dat[i], dat[i+1]]); if (uncomp) {run = 1} else { run = dat[i+2]-32}; r=g; b=g; a=255}
-
-      for (let cr = 0; cr < run; cr++) {
-        if (x >= w) {x = 0;y = y-ls;if (y >= h || 0 > y) {ofst++;y = h-ofst}}
-        pixmap[y][x] = [r, g, b, a]
-        x++
-      }
-    }
+    if (flip == true) {frame.reverse()}
+    frames.push(frame)
   }
 
-  if (flip == true) {pixmap.reverse()}
+  if (anim == false && frames.length > 1) {
+    frames = [frames[0]]
+  }
 
-  return [pixmap, w, h];
+  return [frames, w, h, ad];
 }
 
 // this part is lifted from PolyPixMap
@@ -309,23 +358,56 @@ function jsapf2() {
     canvas.height = apf2[2];
 
     var ctx = canvas.getContext("2d");
-    var imageData = ctx.createImageData(apf2[1], apf2[2]);
-    for (let y = 0; y < apf2[2]; y++) {
-      for (let x = 0; x < apf2[1]; x++) {
-        const i = (y*apf2[1]+x)*4;
-        imageData.data[i] = apf2[0][y][x][0];   // R
-        imageData.data[i+1] = apf2[0][y][x][1]; // G
-        imageData.data[i+2] = apf2[0][y][x][2]; // B
-        if (apf2[0][y][x].length > 3) {imageData.data[i+3] = apf2[0][y][x][3]} else (imageData.data[i+3] = 255); // A
-      }
-    }
-    ctx.putImageData(imageData, 0, 0);
-    var blob = await new Promise(resolve =>
-      canvas.toBlob(resolve, "image/png")
-    );
 
-    img.dataset.orig = old_src;
-    img.src = URL.createObjectURL(blob);
+    if (apf2[0].length > 1) {
+      var imageData = [];
+      var fc = apf2[0].length;
+      var attrs = img.attributes;
+      for (var i = 0; i < attrs.length; i++) {
+        canvas.setAttribute(attrs[i].name, attrs[i].value);
+       }
+      img.parentNode.replaceChild(canvas, img);
+
+      for (let f = 0; f < fc; f++) {
+        imageData.push(ctx.createImageData(apf2[1], apf2[2]));
+        for (let y = 0; y < apf2[2]; y++) {
+          for (let x = 0; x < apf2[1]; x++) {
+            const i = (y*apf2[1]+x)*4;
+            imageData[f].data[i] = apf2[0][f][y][x][0];   // R
+            imageData[f].data[i+1] = apf2[0][f][y][x][1]; // G
+            imageData[f].data[i+2] = apf2[0][f][y][x][2]; // B
+            if (apf2[0][f][y][x].length > 3) {imageData[f].data[i+3] = apf2[0][f][y][x][3]} else {imageData[f].data[i+3] = 255}; // A
+          }
+        }
+      }
+      var cf = 0;
+
+      function nextanimframe() {
+        ctx.putImageData(imageData[cf], 0, 0);
+        cf = (cf+1)%fc
+      }
+      setInterval(nextanimframe, apf2[3]);
+
+    } else {
+      var imageData = ctx.createImageData(apf2[1], apf2[2]);
+
+      for (let y = 0; y < apf2[2]; y++) {
+        for (let x = 0; x < apf2[1]; x++) {
+          const i = (y*apf2[1]+x)*4;
+          imageData.data[i] = apf2[0][0][y][x][0];   // R
+          imageData.data[i+1] = apf2[0][0][y][x][1]; // G
+          imageData.data[i+2] = apf2[0][0][y][x][2]; // B
+          if (apf2[0][0][y][x].length > 3) {imageData.data[i+3] = apf2[0][0][y][x][3]} else (imageData.data[i+3] = 255); // A
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+      var blob = await new Promise(resolve =>
+        canvas.toBlob(resolve, "image/png")
+      );
+
+      img.dataset.orig = old_src;
+      img.src = URL.createObjectURL(blob);
+    }
   });
 };
 
