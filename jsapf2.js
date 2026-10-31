@@ -244,9 +244,9 @@ function int_alpha_composit(l1, l2) {
   b2 = b2*a2
 
   var ac = a1+Math.floor((a2*(255-a1))/255)
-  var rc = (r1+r2) / ac
-  var gc = (g1+g2) / ac
-  var bc = (b1+b2) / ac
+  var rc = (r1+r2) / 255
+  var gc = (g1+g2) / 255
+  var bc = (b1+b2) / 255
 
   return [Math.floor(rc), Math.floor(gc), Math.floor(bc), Math.floor(ac)]
 }
