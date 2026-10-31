@@ -1,4 +1,4 @@
-// jsapf2 0.5.1
+// jsapf2 0.5.2
 
 function headerToData(head) {
   var sect = 0
@@ -252,7 +252,7 @@ function int_alpha_composit(l1, l2) {
 }
 
 function composite(frames, w, h) {
-  final = frames[0]
+  var final = frames[0]
   for (var f = 1; f < frames.length; f++) {
     for (var i = 0; i < h; i++) {
       for (var o = 0; o < w; o++) {
