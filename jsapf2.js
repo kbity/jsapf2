@@ -1,8 +1,6 @@
 // jsapf2 0.5.1
 
 function headerToData(head) {
-  // 44 is comma, 120 is x
-
   var sect = 0
   var hd = [[]]
   for (byte in head) {
