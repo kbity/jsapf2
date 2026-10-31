@@ -232,17 +232,17 @@ function int_alpha_composit(l1, l2) {
 
   var r1 = l1[0]
   var r2 = l2[0]
-  r1 = r1*(a1-a2)
+  r1 = r1*(255-a2)
   r2 = r2*a2
 
   var g1 = l1[1]
   var g2 = l2[1]
-  g1 = g1*(a1-a2)
+  g1 = g1*(255-a2)
   g2 = g2*a2
 
   var b1 = l1[2]
   var b2 = l2[2]
-  b1 = b1*(a1-a2)
+  b1 = b1*(255-a2)
   b2 = b2*a2
 
   var ac = a1+Math.floor((a2*(255-a1))/255)
