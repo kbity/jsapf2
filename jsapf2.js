@@ -1,6 +1,8 @@
-// jsapf2 0.5.2
+// jsapf2 0.5.3
 
 function headerToData(head) {
+  // 44 is comma, 120 is x
+
   var sect = 0
   var hd = [[]]
   for (byte in head) {
@@ -218,30 +220,26 @@ function mkpm(w, h) {
   for (var i = 0; i < h; i++) {
     pixmap.push([])
     for (var o = 0; o < w; o++) {
-      pixmap[i].push(null)
+      pixmap[i].push([255, 0, 255, 0])
     }
   }
   return pixmap;
 }
 
 function int_alpha_composit(l1, l2) {
+  if (l2.length < 4) {return l2;}
+
   var a1 = l1[3]
   var a2 = l2[3]
 
-  var r1 = l1[0]
-  var r2 = l2[0]
-  r1 = r1*(255-a2)
-  r2 = r2*a2
+  var r1 = l1[0]*(255-a2)
+  var r2 = l2[0]*a2
 
-  var g1 = l1[1]
-  var g2 = l2[1]
-  g1 = g1*(255-a2)
-  g2 = g2*a2
+  var g1 = l1[1]*(255-a2)
+  var g2 = l2[1]*a2
 
-  var b1 = l1[2]
-  var b2 = l2[2]
-  b1 = b1*(255-a2)
-  b2 = b2*a2
+  var b1 = l1[2]*(255-a2)
+  var b2 = l2[2]*a2
 
   var ac = a1+Math.floor((a2*(255-a1))/255)
   var rc = (r1+r2) / 255
@@ -273,17 +271,18 @@ function parseAPF2(data) {
   var w = 0
   var h = 0
   var ad = 0
-  var pixmap = [] // blank list, [y][x] format
 
   var line = 0
   var n = [[]]
 
   // this splits our apf2 into its lines
   for (byte of bytes) {
-    if (byte == 10) {line++; n.push([])} else if (byte != 13) {
+    if (byte == 10 && n[line].length > 0) {line++; n.push([])} else if (byte != 13) {
       n[line].push(byte)
     }
   }
+  if (n[n.length - 1].length == 0) {n.pop()}
+  console.log(n)
 
   if (!(check_array(n[0], head_1993)) && !(check_array(n[0], head_1994)) && !(check_array(n[0], head_2000))) {
     if (check_array(n[0], head_1985)) { // upgrade apf to apf2
@@ -360,7 +359,7 @@ function parseAPF2(data) {
   for (var i = 3; i < n.length; i++) {
     dat = n[i]
     var lf = null
-    console.log(anic && i > 3)
+
     if (anic == true && i > 3) {lf = frames[i-4]}
 
     if (mode == 1 || mode == 2) { // APF2 paletted color modes
@@ -411,7 +410,7 @@ function jsapf2() {
         imageData.push(ctx.createImageData(apf2[1], apf2[2]));
         for (var y = 0; y < apf2[2]; y++) {
           for (var x = 0; x < apf2[1]; x++) {
-            const i = (y*apf2[1]+x)*4;
+            var i = (y*apf2[1]+x)*4;
             imageData[f].data[i] = apf2[0][f][y][x][0];   // R
             imageData[f].data[i+1] = apf2[0][f][y][x][1]; // G
             imageData[f].data[i+2] = apf2[0][f][y][x][2]; // B
@@ -432,7 +431,7 @@ function jsapf2() {
 
       for (var y = 0; y < apf2[2]; y++) {
         for (var x = 0; x < apf2[1]; x++) {
-          const i = (y*apf2[1]+x)*4;
+          var i = (y*apf2[1]+x)*4;
           imageData.data[i] = apf2[0][0][y][x][0];   // R
           imageData.data[i+1] = apf2[0][0][y][x][1]; // G
           imageData.data[i+2] = apf2[0][0][y][x][2]; // B
