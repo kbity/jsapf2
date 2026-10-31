@@ -1,6 +1,4 @@
-// jsapf2 0.5.0
-
-nmpap95 = {0: 0, 1: 2, 2: 5, 3: 7, 4: 10, 5: 13, 6: 15, 7: 18, 8: 21, 9: 24, 10: 26, 11: 29, 12: 32, 13: 34, 14: 37, 15: 40, 16: 43, 17: 45, 18: 48, 19: 51, 20: 53, 21: 56, 22: 59, 23: 62, 24: 64, 25: 67, 26: 70, 27: 72, 28: 75, 29: 78, 30: 81, 31: 83, 32: 86, 33: 89, 34: 91, 35: 94, 36: 97, 37: 100, 38: 102, 39: 105, 40: 108, 41: 110, 42: 113, 43: 116, 44: 119, 45: 121, 46: 124, 47: 127, 48: 129, 49: 132, 50: 135, 51: 137, 52: 140, 53: 143, 54: 146, 55: 148, 56: 151, 57: 154, 58: 156, 59: 159, 60: 162, 61: 165, 62: 167, 63: 170, 64: 173, 65: 175, 66: 178, 67: 181, 68: 184, 69: 186, 70: 189, 71: 192, 72: 194, 73: 197, 74: 200, 75: 203, 76: 205, 77: 208, 78: 211, 79: 213, 80: 216, 81: 219, 82: 222, 83: 224, 84: 227, 85: 230, 86: 232, 87: 235, 88: 238, 89: 241, 90: 243, 91: 246, 92: 249, 93: 251, 94: 254};
+// jsapf2 0.5.1
 
 function headerToData(head) {
   // 44 is comma, 120 is x
@@ -91,7 +89,7 @@ function palette_to_palette(palette, palwid = 7, indlen = 1) {
   var palvals = []
   var opalette = []
 
-  for(let i = 0; i < 95*indlen; i++){
+  for(var i = 0; i < 95*indlen; i++){
     opalette.push([255, 0, 255])
   }
 
@@ -141,8 +139,10 @@ function unpacktrits(c) {
   return [r, g, b, a]
 }
 
-function dec_a2k(pixmap, dat, indlen, runlength, mode, uncomp, x, y, transmode, ofst, w, h, ls, lf, tm) {
-  for (let i = 0; i < dat.length; i += indlen+runlength) {
+function dec_a2k(pixmap, dat, indlen, runlength, mode, uncomp, x, y, transmode, ofst, w, h, ls, lf, tm, stp) {
+  var nmpap95 = {0: 0, 1: 2, 2: 5, 3: 7, 4: 10, 5: 13, 6: 15, 7: 18, 8: 21, 9: 24, 10: 26, 11: 29, 12: 32, 13: 34, 14: 37, 15: 40, 16: 43, 17: 45, 18: 48, 19: 51, 20: 53, 21: 56, 22: 59, 23: 62, 24: 64, 25: 67, 26: 70, 27: 72, 28: 75, 29: 78, 30: 81, 31: 83, 32: 86, 33: 89, 34: 91, 35: 94, 36: 97, 37: 100, 38: 102, 39: 105, 40: 108, 41: 110, 42: 113, 43: 116, 44: 119, 45: 121, 46: 124, 47: 127, 48: 129, 49: 132, 50: 135, 51: 137, 52: 140, 53: 143, 54: 146, 55: 148, 56: 151, 57: 154, 58: 156, 59: 159, 60: 162, 61: 165, 62: 167, 63: 170, 64: 173, 65: 175, 66: 178, 67: 181, 68: 184, 69: 186, 70: 189, 71: 192, 72: 194, 73: 197, 74: 200, 75: 203, 76: 205, 77: 208, 78: 211, 79: 213, 80: 216, 81: 219, 82: 222, 83: 224, 84: 227, 85: 230, 86: 232, 87: 235, 88: 238, 89: 241, 90: 243, 91: 246, 92: 249, 93: 251, 94: 254};
+
+  for (var i = 0; i < dat.length; i += indlen+runlength) {
     var r = null
     var g = null
     var b = null
@@ -163,8 +163,8 @@ function dec_a2k(pixmap, dat, indlen, runlength, mode, uncomp, x, y, transmode, 
     if (mode == 7) {g = dat[i]-32; if (uncomp) {run = 1} else { run = dat[i+1]-32}; nmpap95[94] = 255; g = nmpap95[g]; r=g; b=g; a=255}
     if (mode == 8) {g = base95_to_num([dat[i], dat[i+1]]); if (uncomp) {run = 1} else { run = dat[i+2]-32}; r=g; b=g; a=255}
 
-    for (let cr = 0; cr < run; cr++) {
-      if (x >= w) {x = 0;y = y-ls;if (y >= h || 0 > y) {ofst++;y = h-ofst}}
+    for (var cr = 0; cr < run; cr++) {
+      if (x >= w) {x = 0;y = y-ls;if (y >= h || 0 > y) {ofst++;y = Math.abs(stp-ofst)}}
       pixmap[y][x] = [r, g, b, a]
       if (lf != null && (r+g+b+a == 0 || (tm == true && (r == 255 && g == 0 && b == 255 && a == 255)))) {pixmap[y][x] = lf[y][x]}
       x++
@@ -173,13 +173,13 @@ function dec_a2k(pixmap, dat, indlen, runlength, mode, uncomp, x, y, transmode, 
   return pixmap
 }
 
-function dec_apf(pixmap, dat, pal, x, y, ofst, w, h, ls) {
+function dec_apf(pixmap, dat, pal, x, y, ofst, w, h, ls, stp) {
   var col = false
-  for (let i = 0; i < dat.length; i += 1) {
+  for (var i = 0; i < dat.length; i += 1) {
     var run = dat[i]-32
 
-    for (let r = 0; r < run; r++) {
-      if (x >= w) {x = 0;y = y-ls;if (y >= h || 0 > y) {ofst++;y = h-ofst}}
+    for (var r = 0; r < run; r++) {
+      if (x >= w) {x = 0;y = y-ls;if (y >= h || 0 > y) {ofst++;y = Math.abs(stp-ofst)}}
       if (col) {
         pixmap[y][x] = pal[1]
       } else {
@@ -192,8 +192,8 @@ function dec_apf(pixmap, dat, pal, x, y, ofst, w, h, ls) {
   return pixmap
 }
 
-function dec_apf2(pixmap, dat, pal, x, y, ofst, w, h, ls, indlen, runlength, uncomp, lf) {
-  for (let i = 0; i < dat.length; i += indlen+runlength) {
+function dec_apf2(pixmap, dat, pal, x, y, ofst, w, h, ls, indlen, runlength, uncomp, lf, stp) {
+  for (var i = 0; i < dat.length; i += indlen+runlength) {
     var ind = 0
 
     if (indlen == 2) {
@@ -205,8 +205,8 @@ function dec_apf2(pixmap, dat, pal, x, y, ofst, w, h, ls, indlen, runlength, unc
     var run = 1
     if (!uncomp) {run = dat[i+indlen]-32}
 
-    for (let r = 0; r < run; r++) {
-      if (x >= w) {x = 0;y = y-ls;if (y >= h || 0 > y) {ofst++;y = h-ofst}}
+    for (var r = 0; r < run; r++) {
+      if (x >= w) {x = 0;y = y-ls;if (y >= h || 0 > y) {ofst++;y = Math.abs(stp-ofst)}}
       pixmap[y][x] = pal[ind]
       if (lf != null && pal[ind][0]+pal[ind][1]+pal[ind][2]+pal[ind][3] == 0) {pixmap[y][x] = lf[y][x]}
       x++
@@ -224,6 +224,45 @@ function mkpm(w, h) {
     }
   }
   return pixmap;
+}
+
+function int_alpha_composit(l1, l2) {
+  var a1 = l1[3]
+  var a2 = l2[3]
+
+  var r1 = l1[0]
+  var r2 = l2[0]
+  r1 = r1*(a1-a2)
+  r2 = r2*a2
+
+  var g1 = l1[1]
+  var g2 = l2[1]
+  g1 = g1*(a1-a2)
+  g2 = g2*a2
+
+  var b1 = l1[2]
+  var b2 = l2[2]
+  b1 = b1*(a1-a2)
+  b2 = b2*a2
+
+  var ac = a1+Math.floor((a2*(255-a1))/255)
+  var rc = (r1+r2) / ac
+  var gc = (g1+g2) / ac
+  var bc = (b1+b2) / ac
+
+  return [Math.floor(rc), Math.floor(gc), Math.floor(bc), Math.floor(ac)]
+}
+
+function composite(frames, w, h) {
+  final = frames[0]
+  for (var f = 1; f < frames.length; f++) {
+    for (var i = 0; i < h; i++) {
+      for (var o = 0; o < w; o++) {
+        final[i][o] = int_alpha_composit(final[i][o], frames[f][i][o]);
+      }
+    }
+  }
+  return [final]
 }
 
 function parseAPF2(data) {
@@ -306,9 +345,12 @@ function parseAPF2(data) {
 
   if (transmode == 1 && (mode == 0 || mode == 1 || mode == 2)) {pal[0] = [0, 0, 0, 0]}
 
-  var y = h-1
+  var stp = h-1
+  if (flip == true) {ls = 0-ls; stp=0}
+
+  var y = stp
   var x = 0
-  var ofst = 1
+  var ofst = 0
 
   var runlength = 1
   if (uncomp) {runlength = 0;}
@@ -324,18 +366,17 @@ function parseAPF2(data) {
     if (anic == true && i > 3) {lf = frames[i-4]}
 
     if (mode == 1 || mode == 2) { // APF2 paletted color modes
-      frame = dec_apf2(mkpm(w, h), dat, pal, x, y, ofst, w, h, ls, indlen, runlength, uncomp, lf)
+      frame = dec_apf2(mkpm(w, h), dat, pal, x, y, ofst, w, h, ls, indlen, runlength, uncomp, lf, stp)
     } else if (mode == 0) { // APF2 2 color mode
-      frame = dec_apf(mkpm(w, h), dat, pal, x, y, ofst, w, h, ls)
+      frame = dec_apf(mkpm(w, h), dat, pal, x, y, ofst, w, h, ls, stp)
     } else if (mode == 3 || mode == 4 || mode == 5 || mode == 6 || mode == 7 || mode == 8) { // APF2 deep modes and gray modes
-      frame = dec_a2k(mkpm(w, h), dat, indlen, runlength, mode, uncomp, x, y, transmode, ofst, w, h, ls, lf, tm)
+      frame = dec_a2k(mkpm(w, h), dat, indlen, runlength, mode, uncomp, x, y, transmode, ofst, w, h, ls, lf, tm, stp)
     }
-    if (flip == true) {frame.reverse()}
     frames.push(frame)
   }
 
   if (anim == false && frames.length > 1) {
-    frames = [frames[0]]
+    frames = composite(frames, w, h)
   }
 
   return [frames, w, h, ad];
@@ -368,10 +409,10 @@ function jsapf2() {
        }
       img.parentNode.replaceChild(canvas, img);
 
-      for (let f = 0; f < fc; f++) {
+      for (var f = 0; f < fc; f++) {
         imageData.push(ctx.createImageData(apf2[1], apf2[2]));
-        for (let y = 0; y < apf2[2]; y++) {
-          for (let x = 0; x < apf2[1]; x++) {
+        for (var y = 0; y < apf2[2]; y++) {
+          for (var x = 0; x < apf2[1]; x++) {
             const i = (y*apf2[1]+x)*4;
             imageData[f].data[i] = apf2[0][f][y][x][0];   // R
             imageData[f].data[i+1] = apf2[0][f][y][x][1]; // G
@@ -391,8 +432,8 @@ function jsapf2() {
     } else {
       var imageData = ctx.createImageData(apf2[1], apf2[2]);
 
-      for (let y = 0; y < apf2[2]; y++) {
-        for (let x = 0; x < apf2[1]; x++) {
+      for (var y = 0; y < apf2[2]; y++) {
+        for (var x = 0; x < apf2[1]; x++) {
           const i = (y*apf2[1]+x)*4;
           imageData.data[i] = apf2[0][0][y][x][0];   // R
           imageData.data[i+1] = apf2[0][0][y][x][1]; // G
