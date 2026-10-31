@@ -19,3 +19,5 @@ APF2 (Aperture Picture Format 2) JavaScript Polyfill. Intended to replace apf2we
 0.4.0 - Add support for all APF2-2000 static, single-layer images
 
 0.5.0 - Add support for all animated APF2s
+
+0.5.1 - Fix implementation errors, add support for compositing layered apf2s
