@@ -23,3 +23,5 @@ APF2 (Aperture Picture Format 2) JavaScript Polyfill. Intended to replace apf2we
 0.5.1 - Fix implementation errors, add support for compositing layered apf2s
 
 0.5.2 - Fix global assignment in function
+
+0.5.3 - Fix handling of blank lines, allow for some truncated images to display
