@@ -1,4 +1,4 @@
-// jsapf2 0.5.3
+// jsapf2 0.5.4
 
 function headerToData(head) {
   // 44 is comma, 120 is x
@@ -282,7 +282,6 @@ function parseAPF2(data) {
     }
   }
   if (n[n.length - 1].length == 0) {n.pop()}
-  console.log(n)
 
   if (!(check_array(n[0], head_1993)) && !(check_array(n[0], head_1994)) && !(check_array(n[0], head_2000))) {
     if (check_array(n[0], head_1985)) { // upgrade apf to apf2
